@@ -1,0 +1,14 @@
+# Virtual Environments
+**/venv/
+**/.env
+
+# Machine Learning & Data
+**/models/*.h5
+**/models/*.pt
+**/models/*.tflite
+**/data/
+
+# Python caches & VS Code
+__pycache__/
+*.py[cod]
+.vscode/

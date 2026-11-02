@@ -2,17 +2,32 @@ import requests
 
 def get_fda_label(drug_name: str) -> dict:
     url = "https://api.fda.gov/drug/label.json"
+    clean_name = drug_name.lower().strip()
+    
     params = {
-        "search": f'openfda.generic_name:"{drug_name}"',
+        "search": clean_name,
         "limit": 1
     }
     
     response = requests.get(url, params=params)
+    
     if response.status_code == 200:
-        data = response.json()["results"][0]
-        return {
-            "drug_name": drug_name,
-            "warnings": data.get("warnings", ["No warnings available"])[0],
-            "indications": data.get("indications_and_usage", ["No indications available"])[0]
-        }
-    return {"error": "Drug not found in FDA database"}
+        results = response.json().get("results", [])
+        
+        if results:
+            data = results[0]
+            
+            # Safely unpack the lists. If the FDA data is None or [], it defaults to a safe string.
+            warnings_list = data.get("warnings")
+            indications_list = data.get("indications_and_usage")
+            
+            warnings_text = warnings_list[0] if warnings_list else "No official warnings listed in this label."
+            indications_text = indications_list[0] if indications_list else "No official indications listed in this label."
+            
+            return {
+                "drug_name": drug_name,
+                "warnings": warnings_text,
+                "indications": indications_text
+            }
+            
+    return {"error": f"Drug '{clean_name}' not found in FDA database."}

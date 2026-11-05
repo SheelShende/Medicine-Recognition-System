@@ -1,10 +1,20 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from src.vision import predict_pill
 from src.fda_client import get_fda_label
 from src.chatbot import ask_medical_question
 
 app = FastAPI(title="Pill Recognition API")
+
+# Allow React frontend to communicate with the FastAPI backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"], # Your Vite port
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Define the data structure for the chatbot request
 class ChatRequest(BaseModel):

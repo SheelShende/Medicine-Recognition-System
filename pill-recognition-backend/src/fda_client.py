@@ -9,7 +9,7 @@ def get_fda_label(drug_name: str) -> dict:
         "limit": 1
     }
     
-    response = requests.get(url, params=params)
+    response = requests.get(url, timeout=3)
     
     if response.status_code == 200:
         results = response.json().get("results", [])

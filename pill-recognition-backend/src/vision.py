@@ -8,6 +8,11 @@ import os
 # Using a relative path that works when uvicorn is run from the backend root
 model_path = os.path.join("models", "pill_model.h5")
 model = tf.keras.models.load_model(model_path)
+# Create a blank dummy image (assuming MobileNetV2 224x224 input)
+print("Warming up the neural network...")
+dummy_image = np.zeros((1, 224, 224, 3), dtype=np.float32)
+model.predict(dummy_image)
+print("Vision model ready!")
 
 # Dummy class mapping for prototype testing
 # In a full build, this maps directly to the exact folder names from the Kaggle dataset

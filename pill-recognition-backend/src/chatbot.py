@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Gemini with a low temperature (0.2) to make it factual and focused rather than creative
-llm = ChatGoogleGenerativeAI(model="gemini-3.8-flash", temperature=0.2)
+llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0.2, max_retries=0)
 
 def ask_medical_question(drug_name: str, question: str, fda_context: dict) -> str:
     # The strict RAG guardrail prompt

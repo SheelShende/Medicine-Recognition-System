@@ -4,6 +4,9 @@ from pydantic import BaseModel
 from src.vision import predict_pill
 from src.fda_client import get_fda_label
 from src.chatbot import ask_medical_question
+import json
+import ast
+import re
 
 app = FastAPI(title="Pill Recognition API")
 
@@ -42,10 +45,8 @@ async def scan_pill(file: UploadFile = File(...)):
 
 @app.post("/chat/")
 async def chat_about_pill(request: ChatRequest):
-    # 1. Fetch the factual FDA context
     medical_data = get_fda_label(request.drug_name)
     
-    # Ensure we return 'answer' so the React UI doesn't crash on an empty FDA response
     if "error" in medical_data or not medical_data:
         return {
             "drug_name": request.drug_name,
@@ -53,25 +54,32 @@ async def chat_about_pill(request: ChatRequest):
             "answer": "I could not find official FDA data for this medication."
         }
     
-    # 2. Pass context and user question to LangChain/Gemini
     ai_response = ask_medical_question(
         drug_name=request.drug_name,
         question=request.question,
         fda_context=medical_data
     )
     
-    # 3. Safely extract pure text from LangChain's payload
-    final_answer = ""
-    if isinstance(ai_response, str):
-        final_answer = ai_response
-    elif hasattr(ai_response, "content"):
-        if isinstance(ai_response.content, str):
-            final_answer = ai_response.content
-        elif isinstance(ai_response.content, list):
-            # If Gemini returns an array of blocks, grab the text from the first block
-            final_answer = ai_response.content[0].get("text", "")
-    else:
-        final_answer = str(ai_response)
+    # 1. Extract raw output
+    raw_data = ai_response.content if hasattr(ai_response, "content") else str(ai_response)
+    final_answer = str(raw_data)
+    
+    # 2. FORCE-PARSE: Handle Python stringified lists (single quotes)
+    if isinstance(raw_data, str) and raw_data.strip().startswith("["):
+        try:
+            # Safely parse strings with single quotes into real Python objects
+            parsed = ast.literal_eval(raw_data)
+            if isinstance(parsed, list) and len(parsed) > 0 and isinstance(parsed[0], dict):
+                final_answer = parsed[0].get("text", final_answer)
+        except Exception:
+            # Ultimate fallback: Regex to rip the text value directly out of the string
+            match = re.search(r"'text':\s*'([^']*)'", raw_data)
+            if match:
+                final_answer = match.group(1)
+                
+    # 3. Handle actual Python lists
+    elif isinstance(raw_data, list) and len(raw_data) > 0 and isinstance(raw_data[0], dict):
+        final_answer = raw_data[0].get("text", str(raw_data))
         
     return {
         "drug_name": request.drug_name,

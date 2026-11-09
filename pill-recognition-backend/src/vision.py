@@ -1,39 +1,39 @@
-import tensorflow as tf
-from PIL import Image
-import numpy as np
-import io
 import os
+import io
+from PIL import Image
+import google.generativeai as genai
+from dotenv import load_dotenv
 
-# Load the trained model into memory when the server starts
-# Using a relative path that works when uvicorn is run from the backend root
-model_path = os.path.join("models", "pill_model.h5")
-model = tf.keras.models.load_model(model_path)
-# Create a blank dummy image (assuming MobileNetV2 224x224 input)
-print("Warming up the neural network...")
-dummy_image = np.zeros((1, 224, 224, 3), dtype=np.float32)
-model.predict(dummy_image)
-print("Vision model ready!")
+# Load environment variables
+load_dotenv()
 
-# Dummy class mapping for prototype testing
-# In a full build, this maps directly to the exact folder names from the Kaggle dataset
-CLASS_NAMES = ["Ibuprofen", "Lisinopril", "Metformin", "Amoxicillin"] 
+# Configure the native Gemini SDK with your existing API key
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 def predict_pill(image_bytes: bytes) -> str:
-    # 1. Prepare the image to match MobileNetV2's exact input requirements
-    image = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((224, 224))
-    img_array = tf.keras.preprocessing.image.img_to_array(image)
-    img_array = tf.expand_dims(img_array, 0) # Wrap in a batch of 1
-    img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
+    # 1. Convert the raw frontend bytes into a PIL Image object
+    img = Image.open(io.BytesIO(image_bytes))
     
-    # 2. Run the image through the neural network
-    predictions = model.predict(img_array)
+    # 2. Initialize the multimodal vision model
+    model = genai.GenerativeModel('gemini-3.5-flash')
     
-    # 3. Find the neuron with the highest confidence score
-    predicted_class_index = np.argmax(predictions[0])
+    # 3. Prompt Engineering for Vision: Force a clean, single-string output for the FDA API
+    vision_prompt = (
+        "Analyze this image and identify the medication or supplement. "
+        "Look closely at the shape, color, packaging, and any imprinted alphanumeric codes. "
+        "Return ONLY the generic name of the drug or supplement (e.g., 'Ibuprofen', 'Vitamin C', 'Amoxicillin', 'Paracetamol'). "
+        "Do not include any formatting, punctuation, or extra conversational words."
+    )
     
-    # 4. Map the numerical index back to a readable drug name
-    if predicted_class_index < len(CLASS_NAMES):
-        return CLASS_NAMES[predicted_class_index]
-    else:
-        # Fallback to prevent server crashes if the index exceeds our dummy list
-        return f"Unknown_Class_{predicted_class_index}"
+    try:
+        # Pass both the text prompt and the image simultaneously
+        response = model.generate_content([vision_prompt, img])
+        
+        # Clean the output so it can be perfectly injected into your FDA API URL
+        identified_drug = response.text.strip()
+        print(f"Gemini Vision Identified: {identified_drug}")
+        return identified_drug
+        
+    except Exception as e:
+        print(f"Vision API Error: {e}")
+        return "Unknown"

@@ -1,11 +1,29 @@
 import { useState } from 'react';
 import axios from 'axios';
 
+// 1. Helper function to parse the source tags and strip them from the text
+const parseBotResponse = (text) => {
+  let source = null;
+  let cleanText = text;
+
+  if (text.startsWith("")) {
+    source = 'fda';
+    cleanText = text.replace("", "").trim();
+  } else if (text.startsWith("[Source: General AI Knowledge]")) {
+    source = 'ai';
+    cleanText = text.replace("", "").trim();
+  } else if (text.startsWith("")) {
+    source = 'hybrid';
+    cleanText = text.replace("", "").trim();
+  }
+
+  return { source, cleanText };
+};
+
 export default function Chatbox({ drugName }) {
   const [question, setQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-
 
   const handleAsk = async () => {
     if (!question.trim()) return;
@@ -21,7 +39,6 @@ export default function Chatbox({ drugName }) {
         question: userMessage.text
       });
       
-      // --- BUG FIX: Safely parse LangChain's array output ---
       const rawAnswer = response.data.answer;
       let safeText = "";
       
@@ -47,41 +64,71 @@ export default function Chatbox({ drugName }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
       <div style={{ 
-        maxHeight: '300px', 
+        maxHeight: '400px', 
         overflowY: 'auto', 
         display: 'flex', 
         flexDirection: 'column', 
-        gap: '0.75rem',
+        gap: '1rem',
         paddingRight: '0.5rem'
       }}>
         {chatHistory.length === 0 && (
-          <p style={{ color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic' }}>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic', textAlign: 'center' }}>
             Ask a medical question about {drugName}...
           </p>
         )}
         
-        {chatHistory.map((msg, index) => (
-          <div key={index} style={{ 
-            alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-            backgroundColor: msg.role === 'user' ? '#0ea5e9' : '#334155',
-            color: '#f8fafc',
-            padding: '0.75rem 1rem',
-            borderRadius: '12px',
-            maxWidth: '85%',
-            lineHeight: '1.4'
-          }}>
-            {msg.text}
-          </div>
-        ))}
+        {chatHistory.map((msg, index) => {
+          const isBot = msg.role === 'ai';
+          const { source, cleanText } = isBot ? parseBotResponse(msg.text) : { source: null, cleanText: msg.text };
+
+          return (
+            <div key={index} style={{ 
+              alignSelf: isBot ? 'flex-start' : 'flex-end',
+              backgroundColor: isBot ? '#1e293b' : '#0ea5e9',
+              color: '#f8fafc',
+              padding: '1rem',
+              borderRadius: '12px',
+              maxWidth: '85%',
+              lineHeight: '1.5',
+              border: isBot ? '1px solid #334155' : 'none',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+            }}>
+              
+              {/* 2. Dynamic Source Badges Rendered Above Text */}
+              {source === 'fda' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 'bold', color: '#34d399', backgroundColor: 'rgba(6, 78, 59, 0.4)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(6, 78, 59, 0.5)', width: 'fit-content' }}>
+                  <span>🛡️</span> FDA Verified Record
+                </div>
+              )}
+              
+              {source === 'ai' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 'bold', color: '#c084fc', backgroundColor: 'rgba(88, 28, 135, 0.4)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(88, 28, 135, 0.5)', width: 'fit-content' }}>
+                  <span>✨</span> AI General Knowledge
+                </div>
+              )}
+
+              {source === 'hybrid' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 'bold', color: '#60a5fa', backgroundColor: 'rgba(30, 58, 138, 0.4)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(30, 58, 138, 0.5)', width: 'fit-content' }}>
+                  <span>🔄</span> FDA + AI Context
+                </div>
+              )}
+
+              {/* 3. Render the cleaned text safely preserving line breaks */}
+              <div style={{ whiteSpace: 'pre-wrap' }}>
+                {cleanText}
+              </div>
+            </div>
+          );
+        })}
 
         {loading && (
           <div style={{ 
             alignSelf: 'flex-start', 
-            backgroundColor: '#334155', 
+            backgroundColor: '#1e293b', 
             padding: '0.75rem 1rem', 
             borderRadius: '12px',
             color: '#94a3b8',
-            animation: 'pulse 1.5s infinite' 
+            border: '1px solid #334155'
           }}>
             Gemini is typing...
           </div>

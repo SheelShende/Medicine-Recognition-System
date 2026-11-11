@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-// 1. Helper function to parse the source tags and strip them from the text
+// 1. Helper function for source badges
 const parseBotResponse = (text) => {
   let source = null;
   let cleanText = text;
 
   if (text.startsWith("")) {
     source = 'fda';
-    cleanText = text.replace("", "").trim();
-  } else if (text.startsWith("[Source: General AI Knowledge]")) {
+    cleanText = text.replace("[Source: FDA Verified Record]", "").trim();
+  } else if (text.startsWith("")) {
     source = 'ai';
     cleanText = text.replace("", "").trim();
-  } else if (text.startsWith("")) {
+  } else if (text.startsWith("[Source: Hybrid FDA + AI]")) {
     source = 'hybrid';
     cleanText = text.replace("", "").trim();
   }
@@ -62,19 +62,41 @@ export default function Chatbox({ drugName }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '450px', // Fixed height for a sleek app-like feel
+      marginTop: '1.5rem',
+      background: 'rgba(15, 23, 42, 0.4)', // Very subtle glass background
+      borderRadius: '24px',
+      border: '1px solid rgba(255, 255, 255, 0.05)',
+      boxShadow: '0 10px 40px -10px rgba(0,0,0,0.3)',
+      overflow: 'hidden'
+    }}>
+      
+      {/* --- Chat History Window --- */}
       <div style={{ 
-        maxHeight: '400px', 
+        flex: 1, 
         overflowY: 'auto', 
         display: 'flex', 
         flexDirection: 'column', 
-        gap: '1rem',
-        paddingRight: '0.5rem'
+        gap: '1.25rem',
+        padding: '1.5rem',
+        scrollBehavior: 'smooth'
       }}>
         {chatHistory.length === 0 && (
-          <p style={{ color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic', textAlign: 'center' }}>
-            Ask a medical question about {drugName}...
-          </p>
+          <div style={{ 
+            margin: 'auto', 
+            textAlign: 'center', 
+            color: '#64748b', 
+            fontSize: '0.95rem',
+            background: 'rgba(255,255,255,0.03)',
+            padding: '1rem 1.5rem',
+            borderRadius: '100px',
+            border: '1px solid rgba(255,255,255,0.02)'
+          }}>
+            Ask a medical question about <span style={{color: '#e2e8f0', fontWeight: '500'}}>{drugName}</span>
+          </div>
         )}
         
         {chatHistory.map((msg, index) => {
@@ -84,37 +106,42 @@ export default function Chatbox({ drugName }) {
           return (
             <div key={index} style={{ 
               alignSelf: isBot ? 'flex-start' : 'flex-end',
-              backgroundColor: isBot ? '#1e293b' : '#0ea5e9',
-              color: '#f8fafc',
-              padding: '1rem',
-              borderRadius: '12px',
-              maxWidth: '85%',
-              lineHeight: '1.5',
-              border: isBot ? '1px solid #334155' : 'none',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+              // Sleek gradients for user, dark glassmorphism for AI
+              background: isBot ? 'rgba(30, 41, 59, 0.7)' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              backdropFilter: isBot ? 'blur(10px)' : 'none',
+              color: isBot ? '#e2e8f0' : '#ffffff',
+              padding: '1rem 1.25rem',
+              // Asymmetrical borders to create conversation "tails"
+              borderRadius: isBot ? '20px 20px 20px 4px' : '20px 20px 4px 20px',
+              maxWidth: '80%',
+              lineHeight: '1.6',
+              fontSize: '0.95rem',
+              border: isBot ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+              boxShadow: isBot 
+                ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' 
+                : '0 10px 25px -5px rgba(37, 99, 235, 0.4)' // Subtle blue glow for user messages
             }}>
               
-              {/* 2. Dynamic Source Badges Rendered Above Text */}
+              {/* Dynamic Source Badges */}
               {source === 'fda' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 'bold', color: '#34d399', backgroundColor: 'rgba(6, 78, 59, 0.4)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(6, 78, 59, 0.5)', width: 'fit-content' }}>
-                  <span>🛡️</span> FDA Verified Record
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700', color: '#10b981', width: 'fit-content' }}>
+                  <span style={{ fontSize: '0.9rem'}}>🛡️</span> FDA VERIFIED
                 </div>
               )}
               
               {source === 'ai' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 'bold', color: '#c084fc', backgroundColor: 'rgba(88, 28, 135, 0.4)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(88, 28, 135, 0.5)', width: 'fit-content' }}>
-                  <span>✨</span> AI General Knowledge
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700', color: '#a855f7', width: 'fit-content' }}>
+                  <span style={{ fontSize: '0.9rem'}}>✨</span> AI KNOWLEDGE
                 </div>
               )}
 
               {source === 'hybrid' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 'bold', color: '#60a5fa', backgroundColor: 'rgba(30, 58, 138, 0.4)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(30, 58, 138, 0.5)', width: 'fit-content' }}>
-                  <span>🔄</span> FDA + AI Context
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700', color: '#60a5fa', width: 'fit-content' }}>
+                  <span style={{ fontSize: '0.9rem'}}>🔄</span> FDA + AI CONTEXT
                 </div>
               )}
 
-              {/* 3. Render the cleaned text safely preserving line breaks */}
-              <div style={{ whiteSpace: 'pre-wrap' }}>
+              <div style={{ whiteSpace: 'pre-wrap', fontWeight: isBot ? '400' : '500' }}>
                 {cleanText}
               </div>
             </div>
@@ -124,50 +151,70 @@ export default function Chatbox({ drugName }) {
         {loading && (
           <div style={{ 
             alignSelf: 'flex-start', 
-            backgroundColor: '#1e293b', 
-            padding: '0.75rem 1rem', 
-            borderRadius: '12px',
+            background: 'rgba(30, 41, 59, 0.5)', 
+            padding: '1rem 1.25rem', 
+            borderRadius: '20px 20px 20px 4px',
             color: '#94a3b8',
-            border: '1px solid #334155'
+            fontSize: '0.9rem',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}>
-            Gemini is typing...
+            <span style={{ animation: 'pulse 1.5s infinite' }}>Analyzing data...</span>
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-        <input 
-          type="text" 
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
-          placeholder="e.g., What are the side effects?"
-          style={{ 
-            flex: 1,
-            padding: '0.75rem', 
-            background: '#0f172a', 
-            border: '1px solid #475569',
-            borderRadius: '8px',
-            color: '#f8fafc',
-            outline: 'none'
-          }}
-        />
-        <button 
-          onClick={handleAsk}
-          disabled={loading || !question.trim()}
-          style={{
-            padding: '0.75rem 1.25rem',
-            backgroundColor: (loading || !question.trim()) ? '#475569' : '#0284c7',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: (loading || !question.trim()) ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold',
-            transition: 'background 0.2s'
-          }}
-        >
-          Ask
-        </button>
+      {/* --- Unified Pill-Shaped Input Area --- */}
+      <div style={{ 
+        padding: '1rem', 
+        background: 'rgba(15, 23, 42, 0.8)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.05)' 
+      }}>
+        <div style={{
+          display: 'flex',
+          background: '#0f172a',
+          borderRadius: '9999px', // Perfect pill shape
+          padding: '0.35rem 0.35rem 0.35rem 1.25rem',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+        }}>
+          <input 
+            type="text" 
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+            placeholder="Ask about side effects, dosage, etc..."
+            style={{ 
+              flex: 1,
+              background: 'transparent', 
+              border: 'none',
+              color: '#f8fafc',
+              fontSize: '0.95rem',
+              outline: 'none'
+            }}
+          />
+          <button 
+            onClick={handleAsk}
+            disabled={loading || !question.trim()}
+            style={{
+              padding: '0.6rem 1.5rem',
+              background: (loading || !question.trim()) ? '#334155' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: (loading || !question.trim()) ? '#94a3b8' : 'white',
+              border: 'none',
+              borderRadius: '9999px',
+              cursor: (loading || !question.trim()) ? 'not-allowed' : 'pointer',
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              letterSpacing: '0.5px',
+              transition: 'all 0.2s ease',
+              boxShadow: (loading || !question.trim()) ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.3)'
+            }}
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );

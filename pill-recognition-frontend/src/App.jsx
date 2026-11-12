@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import Chatbox from '../components/Chatbox'; // Ensure this path matches your folder structure
+import Chatbox from '../components/Chatbox'; 
 
 export default function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -13,7 +13,7 @@ export default function App() {
     if (file) {
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
-      setIdentifiedDrug(""); // Reset chat when a new image is uploaded
+      setIdentifiedDrug(""); 
     }
   };
 
@@ -25,12 +25,10 @@ export default function App() {
     formData.append("file", selectedFile);
 
     try {
-      // Replace with your exact FastAPI vision endpoint if different
       const response = await axios.post("http://localhost:8000/scan/", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       
-      // Update this key based on what your FastAPI returns (e.g., response.data.drug_name)
       setIdentifiedDrug(response.data.identified_drug || response.data.drug_name);
     } catch (error) {
       console.error("Scanning failed:", error);
@@ -42,36 +40,38 @@ export default function App() {
 
   return (
     <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#020617', // Deep slate/black background
+      minHeight: '100vh',
+      width: '100vw', // Forces the gradient to touch the edges of the screen
+      margin: 0,
+      backgroundColor: '#020617', 
       backgroundImage: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 70%)',
       color: '#f8fafc', 
       fontFamily: 'Inter, system-ui, sans-serif',
-      padding: '3rem 1.5rem'
+      padding: '4rem 1.5rem',
+      overflowX: 'hidden' // Prevents horizontal scrollbars
     }}>
       
-      {/* Main Centered Container */}
       <div style={{ 
         maxWidth: '750px', 
         margin: '0 auto', 
         display: 'flex', 
-        flexDirection: 'column', 
-        gap: '2rem' 
+        flexDirection: 'column' 
       }}>
         
-        {/* Header Section */}
-        <div style={{ textAlign: 'center' }}>
+        {/* Header Section - Added hard marginBottom to fix the overlap */}
+        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <h1 style={{ 
             fontSize: '2.5rem', 
             fontWeight: '800', 
-            margin: '0 0 0.5rem 0',
+            margin: '0 0 1rem 0',
             background: 'linear-gradient(135deg, #60a5fa 0%, #a855f7 100%)',
             WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            WebkitTextFillColor: 'transparent',
+            lineHeight: '1.2'
           }}>
             GenAI Medicine Tracker
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', margin: 0 }}>
+          <p style={{ color: '#94a3b8', fontSize: '1.05rem', margin: 0, lineHeight: '1.5' }}>
             Upload a pill image to analyze its FDA profile and chat with the medical AI.
           </p>
         </div>
@@ -81,31 +81,30 @@ export default function App() {
           background: 'rgba(15, 23, 42, 0.6)',
           border: '1px solid rgba(255, 255, 255, 0.05)',
           borderRadius: '24px',
-          padding: '2rem',
+          padding: '2.5rem',
           boxShadow: '0 10px 40px -10px rgba(0,0,0,0.3)',
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          marginBottom: '2rem'
         }}>
           
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1.5rem', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: '0 0 1.5rem 0', textAlign: 'center' }}>
             Scanner
           </h2>
 
-          {/* Styled File Upload Zone */}
           <label style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            minHeight: '160px',
+            minHeight: '180px',
             border: '2px dashed rgba(255, 255, 255, 0.15)',
             borderRadius: '16px',
             cursor: 'pointer',
             backgroundColor: 'rgba(255, 255, 255, 0.02)',
-            transition: 'background-color 0.2s',
+            transition: 'all 0.2s ease',
             marginBottom: '1.5rem',
-            overflow: 'hidden',
-            position: 'relative'
+            overflow: 'hidden'
           }}>
             <input 
               type="file" 
@@ -122,14 +121,13 @@ export default function App() {
               />
             ) : (
               <div style={{ textAlign: 'center', color: '#64748b' }}>
-                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>📸</span>
+                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.75rem' }}>📸</span>
                 <span style={{ fontWeight: '500', color: '#cbd5e1' }}>Click to upload</span> or drag and drop
-                <div style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>PNG, JPG up to 5MB</div>
+                <div style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>PNG, JPG up to 5MB</div>
               </div>
             )}
           </label>
 
-          {/* Unified Action Button */}
           <button 
             onClick={handleScan}
             disabled={!selectedFile || isScanning}
@@ -142,7 +140,7 @@ export default function App() {
               color: (!selectedFile || isScanning) ? '#64748b' : 'white',
               border: 'none',
               borderRadius: '12px',
-              fontSize: '1rem',
+              fontSize: '1.05rem',
               fontWeight: '600',
               letterSpacing: '0.5px',
               cursor: (!selectedFile || isScanning) ? 'not-allowed' : 'pointer',
@@ -151,13 +149,11 @@ export default function App() {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.75rem'
             }}
           >
             {isScanning ? (
-              <>
-                <span style={{ animation: 'pulse 1.5s infinite' }}>Analyzing Image...</span>
-              </>
+              <span style={{ animation: 'pulse 1.5s infinite' }}>Analyzing Image...</span>
             ) : 'Scan Medication'}
           </button>
         </div>
@@ -165,10 +161,9 @@ export default function App() {
         {/* AI Analysis & Chatbox Section */}
         {identifiedDrug && (
           <div style={{ animation: 'fadeIn 0.5s ease-in-out' }}>
-            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>AI Analysis</h2>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: '0 0 1rem 0' }}>AI Analysis</h2>
               
-              {/* Premium Identified Badge */}
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -178,7 +173,7 @@ export default function App() {
                 color: '#34d399',
                 padding: '0.5rem 1.25rem',
                 borderRadius: '9999px',
-                fontSize: '1.1rem',
+                fontSize: '1.05rem',
                 fontWeight: '700',
                 boxShadow: '0 0 20px rgba(16, 185, 129, 0.1)'
               }}>
@@ -187,13 +182,11 @@ export default function App() {
               </div>
             </div>
 
-            {/* Render the sleek Chatbox we built */}
             <Chatbox drugName={identifiedDrug} />
           </div>
         )}
       </div>
 
-      {/* Basic Keyframe Injection for the fade-in animation */}
       <style>
         {`
           @keyframes fadeIn {

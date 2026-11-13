@@ -1,14 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// 1. Helper function for source badges
+// 1. The new Streaming component that creates the typewriter effect
+const StreamingText = ({ text }) => {
+  const [displayedText, setDisplayedText] = useState('');
+
+  useEffect(() => {
+    let currentIndex = 0;
+    // 15ms delay creates a smooth, fast streaming effect similar to Gemini/ChatGPT
+    const intervalId = setInterval(() => {
+      setDisplayedText(text.slice(0, currentIndex));
+      currentIndex++;
+      if (currentIndex > text.length) {
+        clearInterval(intervalId);
+      }
+    }, 15);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
+  }, [text]);
+
+  return <>{displayedText}</>;
+};
+
+// 2. Helper function for source badges
 const parseBotResponse = (text) => {
   let source = null;
   let cleanText = text;
 
   if (text.startsWith("")) {
     source = 'fda';
-    cleanText = text.replace("[Source: FDA Verified Record]", "").trim();
+    cleanText = text.replace("", "").trim();
   } else if (text.startsWith("")) {
     source = 'ai';
     cleanText = text.replace("", "").trim();
@@ -65,16 +87,15 @@ export default function Chatbox({ drugName }) {
     <div style={{ 
       display: 'flex', 
       flexDirection: 'column', 
-      height: '450px', // Fixed height for a sleek app-like feel
+      height: '450px', 
       marginTop: '1.5rem',
-      background: 'rgba(15, 23, 42, 0.4)', // Very subtle glass background
+      background: 'rgba(15, 23, 42, 0.4)', 
       borderRadius: '24px',
       border: '1px solid rgba(255, 255, 255, 0.05)',
       boxShadow: '0 10px 40px -10px rgba(0,0,0,0.3)',
       overflow: 'hidden'
     }}>
       
-      {/* --- Chat History Window --- */}
       <div style={{ 
         flex: 1, 
         overflowY: 'auto', 
@@ -106,23 +127,19 @@ export default function Chatbox({ drugName }) {
           return (
             <div key={index} style={{ 
               alignSelf: isBot ? 'flex-start' : 'flex-end',
-              // Sleek gradients for user, dark glassmorphism for AI
               background: isBot ? 'rgba(30, 41, 59, 0.7)' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
               backdropFilter: isBot ? 'blur(10px)' : 'none',
               color: isBot ? '#e2e8f0' : '#ffffff',
               padding: '1rem 1.25rem',
-              // Asymmetrical borders to create conversation "tails"
               borderRadius: isBot ? '20px 20px 20px 4px' : '20px 20px 4px 20px',
               maxWidth: '80%',
               lineHeight: '1.6',
               fontSize: '0.95rem',
               border: isBot ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
-              boxShadow: isBot 
-                ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' 
-                : '0 10px 25px -5px rgba(37, 99, 235, 0.4)' // Subtle blue glow for user messages
+              boxShadow: isBot ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : '0 10px 25px -5px rgba(37, 99, 235, 0.4)',
+              animation: 'chatBubbleFade 0.4s ease-out' // Smooth entry for the bubble itself
             }}>
               
-              {/* Dynamic Source Badges */}
               {source === 'fda' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700', color: '#10b981', width: 'fit-content' }}>
                   <span style={{ fontSize: '0.9rem'}}>🛡️</span> FDA VERIFIED
@@ -142,7 +159,8 @@ export default function Chatbox({ drugName }) {
               )}
 
               <div style={{ whiteSpace: 'pre-wrap', fontWeight: isBot ? '400' : '500' }}>
-                {cleanText}
+                {/* 3. Apply the streaming effect only to the AI's cleaned text */}
+                {isBot ? <StreamingText text={cleanText} /> : cleanText}
               </div>
             </div>
           );
@@ -159,14 +177,14 @@ export default function Chatbox({ drugName }) {
             border: '1px solid rgba(255, 255, 255, 0.05)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            animation: 'chatBubbleFade 0.3s ease-out'
           }}>
             <span style={{ animation: 'pulse 1.5s infinite' }}>Analyzing data...</span>
           </div>
         )}
       </div>
 
-      {/* --- Unified Pill-Shaped Input Area --- */}
       <div style={{ 
         padding: '1rem', 
         background: 'rgba(15, 23, 42, 0.8)',
@@ -175,7 +193,7 @@ export default function Chatbox({ drugName }) {
         <div style={{
           display: 'flex',
           background: '#0f172a',
-          borderRadius: '9999px', // Perfect pill shape
+          borderRadius: '9999px', 
           padding: '0.35rem 0.35rem 0.35rem 1.25rem',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
@@ -216,6 +234,15 @@ export default function Chatbox({ drugName }) {
           </button>
         </div>
       </div>
+
+      <style>
+        {`
+          @keyframes chatBubbleFade {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
     </div>
   );
 }

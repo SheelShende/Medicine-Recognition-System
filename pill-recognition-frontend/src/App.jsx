@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import imageCompression from 'browser-image-compression';
 import Chatbox from '../components/Chatbox'; 
 
 export default function App() {
@@ -25,6 +26,18 @@ export default function App() {
     formData.append("file", selectedFile);
 
     try {
+
+      // THE FIX: Compress the image on the frontend before hitting the network
+      const options = {
+        maxSizeMB: 0.5,          // Crush the image down to 500KB max
+        maxWidthOrHeight: 1024,  // Limit dimensions to 1024px
+        useWebWorker: true       // Use a background thread so the UI doesn't freeze
+      };
+      
+      const compressedFile = await imageCompression(selectedFile, options);
+      
+      const formData = new FormData();
+      formData.append("file", compressedFile);
       const response = await axios.post("http://localhost:8000/scan-pill/", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });

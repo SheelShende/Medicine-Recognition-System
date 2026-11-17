@@ -105,7 +105,7 @@ export default function App() {
               alignItems: 'center',
               justifyContent: 'center',
               width: '100%',
-              minHeight: '200px',
+              height: '220px', // Hard-lock the height of the container
               border: '2px dashed rgba(255, 255, 255, 0.15)',
               borderRadius: '16px',
               cursor: 'pointer',
@@ -118,7 +118,18 @@ export default function App() {
               
               {previewUrl ? (
                 <>
-                  <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isScanning ? 0.5 : 1 }} />
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      maxHeight: '180px', // Keep the image strictly constrained
+                      objectFit: 'contain', // Ensure the whole pill/box is visible without cropping
+                      padding: '1rem',
+                      opacity: isScanning ? 0.5 : 1 
+                    }} 
+                  />
                   {/* The HUD Laser Animation */}
                   {isScanning && <div className="scanner-laser" />}
                 </>

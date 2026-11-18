@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import Chatbox from '../components/Chatbox'; 
+import imageCompression from 'browser-image-compression';
 
 export default function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -20,11 +21,21 @@ export default function App() {
   const handleScan = async () => {
     if (!selectedFile) return;
     setIsScanning(true);
-    
-    const formData = new FormData();
-    formData.append("file", selectedFile);
 
     try {
+      // Re-applying the compression we successfully built earlier
+      const options = {
+        maxSizeMB: 0.5,          
+        maxWidthOrHeight: 1024,  
+        useWebWorker: true       
+      };
+      
+      const compressedFile = await imageCompression(selectedFile, options);
+      
+      const formData = new FormData();
+      // Crucial: Keeping the selectedFile.name prevents the Blob crash
+      formData.append("file", compressedFile, selectedFile.name);
+
       const response = await axios.post("http://localhost:8000/scan-pill/", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
